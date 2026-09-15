@@ -1,144 +1,146 @@
 # AI Development Workbench
 
-> **Project codename:** GPTLover  
-> **Status:** actively used in my day-to-day development workflow  
-> **Source code:** private
+[Українська](README.md) · [Русский](README.ru.md) · [English](README.en.md)
 
-A human-in-the-loop AI-assisted development environment designed to reduce the friction between an LLM conversation, a real project, and an interactive terminal.
+> **Кодова назва проєкту:** GPTLover  
+> **Статус:** активно використовується у моєму щоденному процесі розробки  
+> **Вихідний код:** приватний
 
-The project was created because ordinary chat-based AI development required too much manual transfer of context: terminal output, errors, repository state, command results, and follow-up instructions had to be copied between tools by hand.
+Human-in-the-loop середовище для AI-assisted development, створене для того, щоб зменшити розрив між розмовою з LLM, реальним станом проєкту та інтерактивним терміналом.
 
-This workbench turns that fragmented process into one controlled workflow where the human remains the decision-maker.
+Проєкт з’явився через практичну проблему: під час розробки через звичайний чат доводилося вручну переносити між інструментами контекст термінала, помилки, стан репозиторію, результати команд і наступні інструкції.
 
----
-
-## The problem
-
-When an LLM is used for real software work, the difficult part is often not generating code. The difficult part is keeping the model connected to the **actual state of the project**:
-
-- what command was executed;
-- what stdout/stderr actually returned;
-- which terminal/session the result belongs to;
-- whether the result is still current;
-- whether a change passed build/runtime checks;
-- whether the human accepted the change or rolled it back.
-
-Manual copy/paste works for small tasks, but becomes slow and error-prone during longer debugging and development sessions.
+AI Development Workbench об’єднує цей фрагментований процес у керований workflow, у якому людина залишається тим, хто приймає рішення.
 
 ---
 
-## The solution
+## Проблема
 
-I designed an AI-assisted workflow that connects an LLM-driven browser session with a real interactive terminal and project context.
+Коли LLM використовується для реальної розробки, складність часто полягає не у генерації коду, а в тому, щоб модель працювала з **фактичним станом проєкту**:
+
+- яка команда була виконана;
+- що реально повернули stdout/stderr;
+- до якого термінала або сесії належить результат;
+- чи залишається результат актуальним;
+- чи пройшла зміна build/runtime перевірки;
+- чи була зміна прийнята людиною або відкотилася.
+
+Ручний copy/paste працює для невеликих задач, але стає повільним і ненадійним під час довгих сесій налагодження та розробки.
+
+---
+
+## Рішення
+
+Я спроєктувала AI-assisted workflow, який зв’язує браузерну LLM-сесію з реальним інтерактивним терміналом і контекстом проєкту.
 
 ```mermaid
 flowchart LR
-    A[Business / development task] --> B[LLM conversation]
-    B --> C[Project & terminal context]
-    C --> D[Command / change proposal]
-    D --> E[Real terminal execution]
-    E --> F[stdout / stderr / execution state]
+    A[Бізнес- або dev-задача] --> B[LLM-діалог]
+    B --> C[Контекст проєкту та термінала]
+    C --> D[Команда або пропозиція зміни]
+    D --> E[Виконання у реальному терміналі]
+    E --> F[stdout / stderr / стан виконання]
     F --> B
-    B --> G[Human verification]
-    G -->|accept| H[Keep change]
-    G -->|reject / failed| I[Rollback or revise]
+    B --> G[Перевірка людиною]
+    G -->|прийняти| H[Зберегти зміну]
+    G -->|відхилити / помилка| I[Відкотити або виправити]
     I --> B
 ```
 
-The system is intentionally **human-in-the-loop**. It does not treat generated code or terminal output as automatically trustworthy: the result is validated in the real environment before a change is accepted.
+Система навмисно побудована як **human-in-the-loop**. Згенерований код або результат команди не вважається автоматично правильним: зміни перевіряються у реальному середовищі перед прийняттям.
 
 ---
 
-## What I designed and implemented
+## Що я спроєктувала та реалізувала
 
-### Terminal context bridge
+### Міст контексту термінала
 
-The workbench captures relevant terminal context and makes it available to the AI workflow without requiring repeated manual copy/paste.
+Система збирає релевантний контекст термінала та передає його в AI-workflow без постійного ручного copy/paste.
 
-### Browser / terminal integration
+### Інтеграція браузера і термінала
 
-A browser-based LLM session is connected to a specific working terminal/session so that development context remains attached to the correct task.
+Конкретна браузерна LLM-сесія пов’язується з конкретним робочим терміналом/сесією, щоб контекст різних задач не змішувався.
 
-### Multi-session isolation
+### Ізоляція кількох сесій
 
-The workflow is designed to avoid mixing context between different tabs, terminals, or concurrent tasks.
+Workflow враховує паралельну роботу з кількома вкладками, терміналами та задачами і не повинен змішувати їхній стан.
 
-### Request correlation and stale-result protection
+### Request correlation і захист від застарілих результатів
 
-Request identifiers and stale-response guards are used so that delayed or outdated results are not accidentally associated with a newer operation.
+Використовуються request-id та stale-response guards, щоб затриманий або застарілий результат не був помилково прив’язаний до новішої операції.
 
-### Execution-state tracking
+### Відстеження стану виконання
 
-The workflow distinguishes between a command being sent, running, producing output, and completing. This is important for commands where partial terminal output must not be treated as the final result.
+Система розрізняє етапи: команда відправлена, виконується, генерує проміжний вивід і завершена. Це важливо для довгих процесів, де частковий terminal output не можна вважати фінальним результатом.
 
-### Validation and rollback workflow
+### Перевірка та rollback
 
-My normal development cycle is:
+Мій типовий цикл роботи:
 
-`checkpoint / backup -> change -> build or runtime test -> inspect real result -> keep or rollback`
+`checkpoint / backup -> зміна -> build або runtime test -> перевірка фактичного результату -> зберегти або відкотити`
 
-The tool was built around that process rather than around fully autonomous code generation.
-
----
-
-## My role
-
-I own the problem definition, workflow design, architecture decisions, testing strategy, and real-environment validation.
-
-My development process for this project is AI-assisted: I use LLMs to accelerate implementation and code analysis, while I define the requirements, choose the architecture, run the system, inspect actual behavior and logs, and decide whether changes are accepted, revised, or reverted.
-
-This project is also an example of how I work on unfamiliar or existing systems: I prefer adapting and integrating useful components instead of rewriting everything from scratch when that is the more efficient engineering choice.
+Інструмент побудований навколо цього процесу, а не навколо повністю автономної генерації коду.
 
 ---
 
-## Technology context
+## Моя роль
 
-The current implementation is built around a customized desktop terminal/browser environment and uses technologies from the modern TypeScript/Electron ecosystem.
+Я відповідаю за постановку задачі, проєктування workflow, архітектурні рішення, стратегію тестування та перевірку у реальному середовищі.
 
-Relevant areas include:
+Розробка цього проєкту є AI-assisted: я використовую LLM для прискорення реалізації та аналізу коду, але самостійно формую вимоги, обираю архітектуру, запускаю систему, аналізую фактичну поведінку та логи і вирішую, чи приймати, змінювати або відкочувати результат.
 
-- Electron
-- TypeScript / JavaScript
-- React-based UI components
-- interactive terminal integration
-- browser integration
-- Git / GitHub workflow
-- runtime logging and diagnostics
-- automated build and targeted tests
-
-The underlying workspace includes third-party/open-source components. Their original licenses remain applicable to those components.
+Цей проєкт також показує мій підхід до незнайомих або вже існуючих систем: якщо це інженерно доцільно, я віддаю перевагу адаптації та інтеграції корисних компонентів замість переписування всього з нуля.
 
 ---
 
-## Result
+## Технологічний контекст
 
-The workbench is used in my real development process to shorten the feedback loop between:
+Поточна реалізація побудована навколо кастомізованого desktop terminal/browser environment і використовує сучасний TypeScript/Electron стек.
 
-**task -> implementation -> terminal execution -> real error/output -> correction -> verification**
+Ключові напрямки:
 
-Instead of treating the LLM as an autonomous programmer, the system makes it a tightly integrated engineering tool while preserving explicit human control over execution and acceptance of changes.
+- Electron;
+- TypeScript / JavaScript;
+- React-based UI components;
+- інтеграція з інтерактивним терміналом;
+- browser integration;
+- Git / GitHub workflow;
+- runtime logging та діагностика;
+- автоматизовані build-перевірки та targeted tests.
 
----
-
-## Why this case matters
-
-This project demonstrates more than prompt usage. It required me to:
-
-- identify a workflow bottleneck;
-- design a system around real operational constraints;
-- integrate multiple existing components;
-- reason about state, concurrency and stale results;
-- test behavior in a real desktop/terminal environment;
-- improve the tool iteratively based on failures observed during daily use.
+Внутрішній workspace містить сторонні open-source компоненти. Для них залишаються чинними їхні оригінальні ліцензії.
 
 ---
 
-## Source availability
+## Результат
 
-The production/source repository is **private** and is not distributed through this portfolio repository.
+Workbench використовується у моєму реальному процесі розробки, щоб скоротити feedback loop між:
 
-This repository is a public case study only. It contains no application source code, credentials, private configuration, or distributable build artifacts.
+**задача -> реалізація -> виконання у терміналі -> реальна помилка/вивід -> виправлення -> перевірка**
 
-Some parts of the private implementation are based on or interact with third-party/open-source software. Those components remain subject to their respective licenses.
+Замість того щоб використовувати LLM як автономного програміста, система перетворює її на тісно інтегрований інженерний інструмент із явним людським контролем над виконанням і прийняттям змін.
 
-For recruitment or technical interviews, I can demonstrate the workflow and discuss architecture and engineering decisions without publishing the private source code.
+---
+
+## Чому цей кейс важливий
+
+Цей проєкт демонструє більше, ніж просто вміння писати промпти. Для його створення потрібно було:
+
+- знайти bottleneck у реальному workflow;
+- спроєктувати систему навколо практичних обмежень;
+- інтегрувати кілька існуючих компонентів;
+- працювати зі станом, конкурентністю та застарілими результатами;
+- перевіряти поведінку у реальному desktop/terminal середовищі;
+- ітеративно покращувати інструмент на основі помилок, виявлених під час щоденного використання.
+
+---
+
+## Доступність вихідного коду
+
+Основний робочий репозиторій є **приватним** і не поширюється через цей portfolio repository.
+
+Цей репозиторій є лише публічним case study. Він не містить вихідного коду застосунку, credentials, приватних конфігурацій або build artifacts для розповсюдження.
+
+Частина приватної реалізації базується на сторонньому/open-source програмному забезпеченні або взаємодіє з ним. Такі компоненти залишаються під умовами своїх відповідних ліцензій.
+
+Під час технічної співбесіди я можу продемонструвати workflow та обговорити архітектуру й інженерні рішення без публікації приватного вихідного коду.
