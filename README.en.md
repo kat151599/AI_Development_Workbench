@@ -1,146 +1,128 @@
+<p align="right">
+  <a href="README.md">Українська</a> · <a href="README.ru.md">Русский</a> · <a href="README.en.md">English</a>
+</p>
+
+<p align="center">
+  <img src="assets/workbench-hero.svg" alt="AI Development Workbench" width="100%" />
+</p>
+
 # AI Development Workbench
 
-[Українська](README.md) · [Русский](README.ru.md) · [English](README.en.md)
+**Portfolio case study of a customized Wove-based AI-assisted development environment.**  
+A local human-in-the-loop workflow that connects an LLM session with real project context, an interactive terminal, command execution, runtime output, and explicit human validation.
 
-> **Project codename:** GPTLover  
-> **Status:** actively used in my day-to-day development workflow  
-> **Source code:** private
+<p>
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Electron-47848F?logo=electron&logoColor=white" alt="Electron" />
+  <img src="https://img.shields.io/badge/Wove-mod-8250DF" alt="Wove mod" />
+  <img src="https://img.shields.io/badge/Terminal-integration-24292F" alt="Terminal integration" />
+  <img src="https://img.shields.io/badge/Human--in--the--loop-1F883D" alt="Human in the loop" />
+  <img src="https://img.shields.io/badge/Source-private-BC4C00" alt="Private source" />
+</p>
 
-A human-in-the-loop AI-assisted development environment designed to reduce the friction between an LLM conversation, the real state of a project, and an interactive terminal.
+> [!IMPORTANT]
+> This is a **public portfolio case study**, not a source repository. The working implementation is private. The current application is a **custom modification of Wove**; third-party/open-source components remain subject to their original licenses.
 
-The project was created because ordinary chat-based AI development required too much manual transfer of context: terminal output, errors, repository state, command results, and follow-up instructions had to be copied between tools by hand.
-
-AI Development Workbench turns that fragmented process into one controlled workflow where the human remains the decision-maker.
-
----
-
-## The problem
-
-When an LLM is used for real software work, the difficult part is often not generating code. The difficult part is keeping the model connected to the **actual state of the project**:
-
-- what command was executed;
-- what stdout/stderr actually returned;
-- which terminal/session the result belongs to;
-- whether the result is still current;
-- whether a change passed build/runtime checks;
-- whether the human accepted the change or rolled it back.
-
-Manual copy/paste works for small tasks, but becomes slow and error-prone during longer debugging and development sessions.
+| | |
+|---|---|
+| **Solution type** | Desktop developer tool / AI-assisted workflow |
+| **Base** | Wove, customized for my development workflow |
+| **My role** | Problem definition, workflow design, architecture decisions, AI-assisted implementation, runtime validation |
+| **Core integration** | Browser/LLM ↔ project context ↔ interactive terminal |
+| **Status** | Actively used in day-to-day development |
+| **Source code** | Private |
 
 ---
 
-## The solution
+## 🖥️ Product in Action
 
-I designed an AI-assisted workflow that connects an LLM-driven browser session with a real interactive terminal and project context.
+The image below is a **real working screenshot**, not a concept mockup. On the left is an LLM session with task context and commands; on the right is the customized Wove environment with an interactive terminal and the real project state.
+
+<p align="center">
+  <img src="assets/workbench-real-screenshot.webp" alt="AI Development Workbench running as a modified Wove environment" width="100%" />
+</p>
+
+<p align="center"><sub>LLM plans a change → command executes in the real terminal → stdout/stderr return to the workflow → the result is validated by a human.</sub></p>
+
+---
+
+## 🎯 Engineering Problem
+
+Chat-based AI can generate code, but it usually lacks access to the **actual state of the development environment**. During longer development sessions, terminal output, errors, repository state, build/runtime results, and follow-up instructions have to be moved between tools manually.
+
+That creates unnecessary friction and introduces a real risk of using **stale output or output from the wrong session**.
+
+## 💡 Solution
+
+I customized Wove around a workflow where a browser-based LLM session is connected to a specific working terminal, and execution results are fed back into the same development loop.
 
 ```mermaid
 flowchart LR
-    A[Business or development task] --> B[LLM conversation]
-    B --> C[Project and terminal context]
-    C --> D[Command or change proposal]
+    A[Task / requirement] --> B[LLM session]
+    B --> C[Project + terminal context]
+    C --> D[Command / code change]
     D --> E[Real terminal execution]
-    E --> F[stdout / stderr / execution state]
+    E --> F[stdout / stderr / status]
     F --> B
     B --> G[Human verification]
-    G -->|accept| H[Keep change]
-    G -->|reject / failed| I[Rollback or revise]
+    G -->|Accept| H[Keep changes]
+    G -->|Failed / wrong| I[Revise or rollback]
     I --> B
 ```
 
-The system is intentionally **human-in-the-loop**. Generated code or terminal output is not treated as automatically trustworthy: the result is validated in the real environment before a change is accepted.
+The system is intentionally **human-in-the-loop**: AI accelerates implementation and analysis, but the output is not trusted until it has been validated in the real environment.
 
 ---
 
-## What I designed and implemented
+## ✅ Implemented
 
-### Terminal context bridge
-
-The workbench captures relevant terminal context and makes it available to the AI workflow without requiring repeated manual copy/paste.
-
-### Browser / terminal integration
-
-A browser-based LLM session is connected to a specific working terminal/session so that development context remains attached to the correct task.
-
-### Multi-session isolation
-
-The workflow is designed to avoid mixing context between different tabs, terminals, or concurrent tasks.
-
-### Request correlation and stale-result protection
-
-Request identifiers and stale-response guards are used so that delayed or outdated results are not accidentally associated with a newer operation.
-
-### Execution-state tracking
-
-The workflow distinguishes between a command being sent, running, producing output, and completing. This matters for longer processes where partial terminal output must not be treated as the final result.
-
-### Validation and rollback workflow
-
-My normal development cycle is:
-
-`checkpoint / backup -> change -> build or runtime test -> inspect real result -> keep or rollback`
-
-The tool was built around that process rather than around fully autonomous code generation.
+| Area | What the system does |
+|---|---|
+| **Terminal context bridge** | Makes relevant real terminal context available without repeated manual copy/paste |
+| **Browser ↔ terminal binding** | Connects a specific LLM session to a specific working terminal |
+| **Multi-session isolation** | Prevents state from parallel tabs/tasks from being mixed |
+| **Request correlation** | Uses request IDs to associate requests with the correct results |
+| **Stale-result protection** | Prevents delayed output from being treated as the result of a newer operation |
+| **Execution-state tracking** | Distinguishes sent / running / intermediate output / completed states |
+| **Validation workflow** | Supports change → build/runtime check → inspect → accept/revise |
+| **Rollback-oriented process** | Uses checkpoints/backups and safe rollback as part of the normal workflow |
 
 ---
 
-## My role
+## 👤 My Role
 
-I own the problem definition, workflow design, architecture decisions, testing strategy, and real-environment validation.
+My workflow is:
 
-My development process for this project is AI-assisted: I use LLMs to accelerate implementation and code analysis, while I define the requirements, choose the architecture, run the system, inspect actual behavior and logs, and decide whether changes are accepted, revised, or reverted.
+> **define the problem → specify requirements → choose the architecture → adapt an existing component → implement changes with AI-assisted development → run them in the real environment → inspect actual behavior → accept / revise / rollback**
 
-This project is also an example of how I work on unfamiliar or existing systems: I prefer adapting and integrating useful components instead of rewriting everything from scratch when that is the more efficient engineering choice.
-
----
-
-## Technology context
-
-The current implementation is built around a customized desktop terminal/browser environment and uses technologies from the modern TypeScript/Electron ecosystem.
-
-Relevant areas include:
-
-- Electron;
-- TypeScript / JavaScript;
-- React-based UI components;
-- interactive terminal integration;
-- browser integration;
-- Git / GitHub workflow;
-- runtime logging and diagnostics;
-- automated build checks and targeted tests.
-
-The underlying workspace includes third-party/open-source components. Their original licenses remain applicable to those components.
+I own the problem definition, workflow and architecture decisions, integration strategy, work with the existing codebase, runtime testing, investigation of race/stale-state issues, and the final decision to accept or revert a change.
 
 ---
 
-## Result
+## 🧰 Technology Stack
 
-The workbench is used in my real development process to shorten the feedback loop between:
+`TypeScript` · `JavaScript` · `Electron` · `React` · `Node.js` · `Wove` · `xterm` · `PowerShell / terminal integration` · `Git / GitHub` · `runtime logging` · `targeted tests`
 
-**task -> implementation -> terminal execution -> real error/output -> correction -> verification**
-
-Instead of treating the LLM as an autonomous programmer, the system makes it a tightly integrated engineering tool while preserving explicit human control over execution and acceptance of changes.
+The implementation is based on a customized Wove codebase. Its package metadata uses Apache-2.0; relevant third-party components are not relicensed by this portfolio repository.
 
 ---
 
-## Why this case matters
+## 📈 Result
 
-This project demonstrates more than prompt usage. It required me to:
+The workbench shortens the feedback loop between:
 
-- identify a workflow bottleneck;
-- design a system around real operational constraints;
-- integrate multiple existing components;
-- reason about state, concurrency, and stale results;
-- test behavior in a real desktop/terminal environment;
-- improve the tool iteratively based on failures observed during daily use.
+**task → analysis → change → execution → real output → correction → validation**
+
+Its main value is not simply “generate more code”, but to **reduce context loss and repetitive manual switching between AI, project state, and the runtime environment**.
+
+## 🔎 Why This Case Matters
+
+This project demonstrates my ability to understand and adapt an existing complex product, design integrations between browser UI and runtime components, reason about state/concurrency/stale results, and use AI as an engineering multiplier while preserving explicit human control.
 
 ---
 
-## Source availability
+## 🎥 Demo / Technical Discussion
 
-The production/source repository is **private** and is not distributed through this portfolio repository.
+The working source code is private, but during a technical interview I can demonstrate the live workflow and discuss request correlation, stale-result guards, session isolation, terminal integration, and the validation/rollback process.
 
-This repository is a public case study only. It contains no application source code, credentials, private configuration, or distributable build artifacts.
-
-Some parts of the private implementation are based on or interact with third-party/open-source software. Those components remain subject to their respective licenses.
-
-For recruitment or technical interviews, I can demonstrate the workflow and discuss architecture and engineering decisions without publishing the private source code.
+> See [NOTICE.md](NOTICE.md) for source-code and third-party licensing notes.
